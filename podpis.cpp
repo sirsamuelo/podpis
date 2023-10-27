@@ -11,75 +11,67 @@ int modExp(int base, int exponent, int modulus) {
         if (exponent % 2 == 1) { 
             result = (result * base) % modulus;
         }
-        exponent = exponent >> 1; 
+        exponent = exponent / 2; 
         base = (base * base) % modulus;
     }
     return result;
 }
 
-
 int gcd(int a, int b) {
      while (b != 0) {
-        int temp = a % b;
+        int remainder = a % b;
         a = b;
-        b = temp;
+        b = remainder;
     }
     return abs(a);
 }
-int modInverse(int a, int m) {
-    int m0 = m;
-    int y = 0, x = 1;
+int modInverse(int number, int modulus) {
+    int originalModulus = modulus;
+    int inverse = 0, current = 1;
 
-    if (m == 1)
+    if (modulus == 1)
         return 0;
 
-    while (a > 1) {
-        // q is quotient
-        int q = a / m;
-        int t = m;
+    while (number > 1) {
+        int quotient = number / modulus;
+        int temp = modulus;
 
-        // m is remainder now, process same as Euclid's algo
-        m = a % m, a = t;
-        t = y;
+        modulus = number % modulus;
+        number = temp;
+        temp = inverse;
 
-        // Update y and x
-        y = x - q * y;
-        x = t;
+        inverse = current - quotient * inverse;
+        current = temp;
     }
 
-    // Make x positive
-    if (x < 0)
-        x += m0;
+    if (current < 0)
+        current += originalModulus;
 
-    return x;
+    return current;
+}
+
+int selectPublicKey(int phi_n) {
+    for (int i = 2; i < phi_n; i++) {
+        if (gcd(i, phi_n) == 1) {
+            return i;
+        }
+    }
 }
 
 void generateKeys(int &e, int &d, int &n) {
-    // Krok 1: Vyber dve veľké prvocísla p a q (tu pre zjednodušenie používame malé čísla)
     int p = 61, q = 53;
-
-    // Krok 2: Vypočítať n = p * q
     n = p * q;
-
-    // Krok 3: Vypočítať Eulerovu funkciu phi(n)
     int phi_n = (p - 1) * (q - 1);
+    cout << "Eulerove phi_n je: " << phi_n << "\n";
 
-    // Krok 4: Vybrať verejný kľúč e
-    for (int i = 2; i < phi_n; i++) {
-        if (gcd(i, phi_n) == 1) {
-            e = i;
-            break;
-        }
-    }
-
-    // Krok 5: Vypočítať súkromný kľúč d
+    e = selectPublicKey(phi_n);
     d = modInverse(e, phi_n);
 }
 
 unsigned int simpleHash(const string& data, int n) {
     unsigned int hash = 0;
     for (char c : data) {
-        hash = (hash * 1313 + c) % n; // tu sme pridali mod n
+        hash = (hash * 1313 + c) % n;
     }
     return hash;
 }
